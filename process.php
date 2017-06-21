@@ -78,6 +78,7 @@ function stop($contab_config, $monitor_path)
  */
 function checkOptions()
 {
+    checkEnv();//检测环境
     $options = getopt('s:');
     if (empty($options) || !isset($options['s'])) {
         printUsage();
@@ -102,6 +103,22 @@ function printUsage()
     die(PHP_EOL);
 }
 
+
+
+/**
+ * 检测环境是否具有必须的函数
+ */
+ function checkEnv()
+{
+    if (!function_exists('exec')) {
+        $usage_message = "Usage:".PHP_EOL;
+        $usage_message .= 'The exec() functions does not exist. Please edit the php.ini file,';
+        $usage_message .= ' view disable_functions list, and remove the function from the disabled list.';
+        echo Colors::initColoredString($usage_message, 'red', 'light_gray');
+        die(PHP_EOL);
+    }
+    return true;
+}
 
 
 
