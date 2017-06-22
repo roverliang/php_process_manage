@@ -28,8 +28,10 @@ switch ($option) {
         echo Colors::initColoredString($cout_glue, 'red', 'light_gray');
         $count_message = "config  process is : {$process_count_info['config']}".PHP_EOL;
         $count_message .= "running process is : {$process_count_info['run']}".PHP_EOL;
-        $count_message .= "used time is :".($end_time - $start_time)." second".PHP_EOL;
+        $count_message .= "used time is :".($end_time - $start_time)." second";
+
         echo Colors::initColoredString($count_message, 'red', 'light_gray');
+        echo PHP_EOL;
         break;
 
     case 'stop':

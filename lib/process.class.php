@@ -19,59 +19,30 @@ class Process
      */
     public static function StartProcessByProcessConfig($process_config)
     {
-        self::checkProcessConfig($process_config);
+        self::KillProcessByProcessConfig($process_config);
+        $message = "【run new process】";
+        Colors::notice($message);
+
         foreach ($process_config as $process) {
+            if (!$process['process_state']) {
+                continue;
+            }
             //先获取原有的进程列表
-            $process_file    = SCRIPT_PATH.$process['process_file'];
-            $process_old_arr = Server::getProcessIDs($process_file);
+            $process_file = SCRIPT_PATH.$process['process_file'];
+            Server::startProcessByRoot($process_file, $process['process_num']);
+            $processArr = Server::getProcessIDs($process_file);
 
-            //如果原本没有进程，则直接启动新的进程。
-            if (!$process_old_arr || !is_array($process_old_arr)) {
-                Server::startProcessByRoot($process_file, $process['process_num']);
-                $processArr = Server::getProcessIDs($process_file);
+            if (!is_array($processArr) || empty($processArr)) {
+                continue;
+            }
 
-                if (!$processArr || !is_array($processArr)) {
-                    continue;
-                }
-
-                $message = "【run new process】";
-                Colors::notice($message);
-                foreach ($processArr as $pid) {
-                    $message = "start {$process_file} Success, Process ID is: {$pid}";
-                    Colors::success($message);
-                }
-
-            } else {
-                //如果原有进程存在，则重新启动进程，新进程启动成功后，杀死老进程。
-                Server::startProcessByRoot($process_file, $process['process_num']);
-                $new_processArr = Server::getProcessIDs($process_file);
-
-                if (!$new_processArr || !is_array($new_processArr)) {
-                    continue;
-                }
-
-                //杀死老进程
-                foreach ($process_old_arr as $processid) {
-                    $return_var = Server::killProcessByProcessId($processid);
-                    if (!$return_var) {
-                        $msg = "kill {$process_file} Failure, Process ID is: {$processid}";
-                        Colors::error($msg);
-                    } else {
-                        $msg = "kill {$process_file} Success, Process ID is: {$processid}";
-                        Colors::success($msg);
-                    }
-                }
-
-                $processArr = Server::getProcessIDs($process_file);
-                $message    = "【restart Process】";
-                Colors::notice($message);
-
-                foreach ($processArr as $pid) {
-                    $message = "start {$process_file} Success, Process ID is: {$pid}";
-                    Colors::success($message);
-                }
+            foreach ($processArr as $pid) {
+                $message = "start {$process_file} Success, Process ID is: {$pid}";
+                Colors::success($message);
             }
         }
+
+        return true;
     }
 
 
@@ -83,15 +54,20 @@ class Process
     public static function KillProcessByProcessConfig($process_config)
     {
         self::checkProcessConfig($process_config);
+
         foreach ($process_config as $process) {
+            if (!$process['process_state']) {
+                continue;
+            }
+
             //先获取原有的进程列表
             $process_file    = SCRIPT_PATH.$process['process_file'];
             $process_old_arr = Server::getProcessIDs($process_file);
-            if (empty($process_old_arr) || !is_array($process_old_arr)) {
-                $msg = "No process is running, please start the process";
-                Colors::error($msg);
-                return false;
+
+            if (!is_array($process_old_arr) || empty($process_old_arr)) {
+                continue;
             }
+
             //杀死老进程
             foreach ($process_old_arr as $processid) {
                 $return_var = Server::killProcessByProcessId($processid);
@@ -104,6 +80,8 @@ class Process
                 }
             }
         }
+
+
         return true;
     }
 
@@ -214,10 +192,13 @@ class Process
      */
     public static function processCount($process_config)
     {
-        self::checkProcessConfig($process_config);
         $config = 0;
         $run    = 0;
-        foreach ($process_config as $script_file => $processarr) {
+        foreach ($process_config as $processarr) {
+            if (!$processarr['process_state']) {
+                continue;
+            }
+
             $process_file = SCRIPT_PATH.$processarr['process_file'];
             $runarr       = Server::getProcessIDs($process_file);
             $config       += $processarr['process_num'];
